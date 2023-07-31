@@ -11,7 +11,7 @@ env:
   AWS_SECRET_ACCESS_KEY: ${{ secrets.S_KEY }}
   AWS_DEFAULT_REGION: "us-east-1"
   APPNAME: ${{ secrets.APPNAME }}
-  ENVNAME: ${{ GITHUB_REF_NAME }}
+  ENVNAME: ${{ github.ref_name }}
   GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
   StackName: ${{ secrets.APPNAME }}-${{ secrets.ENVNAME }}
   
