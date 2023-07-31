@@ -9,6 +9,8 @@ export class LambdaWithLayer extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
+    console.log('accessing context 👉', this.node.tryGetContext('fromApp'));
+
     //Lambda layer creation definition
     const layer0 = new lambda.LayerVersion(this, 'LayerVersion', {
       compatibleRuntimes: [
