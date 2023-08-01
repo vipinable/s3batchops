@@ -14,27 +14,14 @@ logger.setLevel(logging.INFO)
 # Create service clients
 session = boto3.session.Session()
 s3 = session.client('s3')
+sts = session.clinet('sts')
+s3c = session.client('s3control')
 
 def handler(event, context):
     
     logger.info("An event received %s" % (event))
     logger.info("Response received")
     
-    try:
-       if event['multiValueHeaders'] and event['multiValueHeaders']['Referer'] and event['multiValueHeaders']['Referer'][0]  == 'https://login.microsoftonline.com/':
-          pass
-    except:
-        return {
-            "statusCode": 401,
-            "isBase64Encoded": False,
-            "headers":{
-                "Access-Control-Allow-Origin":"'*'",
-                "Access-Control-Allow-Methods":"GET",
-                "Content-Type": "text/html; charset=utf-8"
-                },
-            "body": '{ "message" : "Unauthorized"}'
-            }
-            
     prefix = 'test1'
     bucket = os.environ.get("BUCKET")
     s3role = os.environ.get("S3ROLE")
@@ -131,7 +118,6 @@ def handler(event, context):
                                     Objects=list_objects(bucket,prefix),
                                  )
             }
-
 
 def create_presigned_post(bucket_name, object_name, expiration,
                           fields=None, conditions=None):
@@ -231,3 +217,49 @@ def list_objects(bucketname,prefix):
                
     return ObjectsList['Contents']
     
+def s3batchops():
+    source_bucket = os.environ.get("SOURCE_BUCKET")
+    sink_bucket = os.environ.get("SINK_BUCKET")
+    role_arn = os.environ.get("ROLE_ARN")
+    RequestToken = str(uuid.uuid4())
+    AccountID = sts.get_caller_identity()['Account']
+
+    response = client.create_job(
+        AccountId=AccountID,
+        Operation={
+            'S3PutObjectCopy': {
+                'TargetResource': 'arn:aws:s3:::' + sink_bucket,
+                'CannedAccessControlList': 'bucket-owner-full-control',
+                'StorageClass': 'STANDARD',
+                'TargetKeyPrefix': 's3batch',
+                'ChecksumAlgorithm': 'SHA256'
+            },
+            'S3PutObjectTagging': {
+                'TagSet': [
+                    {
+                        'Key': 'Label',
+                        'Value': 'BatchOps'
+                    },
+                ]
+            }
+        },
+        Report={
+            'Bucket': 'arn:aws:s3:::' + sink_bucket,
+            'Format': 'Report_CSV_20180820',
+            'ReportScope': 'AllTasks'
+        },
+        ClientRequestToken='RequestToken',
+        Manifest={
+            'Spec': {
+                'Format': 'S3BatchOperations_CSV_20180820',
+            },
+            'Location': {
+                'ObjectArn': 'string',
+                'ETag': 'string'
+            }
+        },
+        Description='S3 batch operations testing',
+        Priority=123,
+        RoleArn='string',
+    )
+    print(response)

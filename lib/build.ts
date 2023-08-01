@@ -49,32 +49,53 @@ export class LambdaWithLayer extends Stack {
       ],
     }));
 
-    //IAM PreSign Assume Role
-    const s3PreSignRole = new iam.Role(this, 's3PreSignRole', {
-      assumedBy: new iam.ArnPrincipal(LambdaExecRole.roleArn),
-      description: 'Lambda Execution Role',
+    //S3 batch operations job role
+    const s3cRole = new iam.Role(this, 's3cRole', {
+      assumedBy: new iam.ArnPrincipal('batchoperations.s3.amazonaws.com'),
+      description: 'S3 batch operations job role',
     });
     
-    s3PreSignRole.addToPolicy(new iam.PolicyStatement({
+    s3cRole.addToPolicy(new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
-      resources: [s3Bucket.bucketArn+'/*'],
+      resources: [
+        'arn:aws:s3:::tempbackupbkt/*'
+      ],
       actions: [
-          's3:GetObject',
           's3:PutObject',
+          's3:PutObjectAcl',
+          's3:PutObjectTagging',
       ],
     }));
-    
-    LambdaExecRole.addToPolicy(new iam.PolicyStatement({
+
+    s3cRole.addToPolicy(new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
-      resources: [s3PreSignRole.roleArn],
+      resources: [
+        "arn:aws:s3:::xlsreport-test-www",
+        "arn:aws:s3:::xlsreport-test-www/*"
+      ],
       actions: [
-          'sts:AssumeRole',
+        "s3:GetObject",
+        "s3:GetObjectAcl",
+        "s3:GetObjectTagging",
+        "s3:ListBucket",
       ],
     }));
-      
+
+    s3cRole.addToPolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      resources: [
+        s3Bucket.arnForObjects('*'),
+      ],
+      actions: [
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:GetObjectVersion"
+      ],
+    }));
+          
     //Main function definition
     const fn = new lambda.Function(this, 'Function', {
-      description: 'S3SUI test function',
+      description: 'S3 batch operations management function',
       runtime: lambda.Runtime.PYTHON_3_8,
       handler: 'main.handler',
       code: lambda.Code.fromAsset(path.join(__dirname, '../src')),
@@ -83,6 +104,9 @@ export class LambdaWithLayer extends Stack {
       environment: {
         APPNAME: process.env.ApplicationName!,
         ENVNAME: process.env.Environment!, 
+        SOURCE_BUCKET: 'xlsreport-test-www',
+        SINK_BUCKET: 'tempbackupbkt',
+        ROLE_ARN: s3cRole.roleArn
       },
       });
 
