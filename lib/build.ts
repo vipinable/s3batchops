@@ -51,7 +51,7 @@ export class LambdaWithLayer extends Stack {
 
     //S3 batch operations job role
     const s3cRole = new iam.Role(this, 's3cRole', {
-      assumedBy: new iam.ArnPrincipal('batchoperations.s3.amazonaws.com'),
+      assumedBy: new iam.ServicePrincipal('batchoperations.s3.amazonaws.com'),
       description: 'S3 batch operations job role',
     });
     
