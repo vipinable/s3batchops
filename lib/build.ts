@@ -3,6 +3,7 @@ import { Construct } from 'constructs';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as path from 'path';
 export class LambdaWithLayer extends Stack {
 //BeginStackDefinition
@@ -131,6 +132,12 @@ export class LambdaWithLayer extends Stack {
         "s3:UpdateJobStatus"
       ],
     }));
+
+    const apigw = new apigateway.RestApi(this, `{id}apigw`);
+       
+    //API gateway lambda integration
+    const apigwbeIntegration = new apigateway.LambdaIntegration(fn);
+    apigw.root.addMethod('GET', apigwbeIntegration);
 
   //EndStack
   }}
