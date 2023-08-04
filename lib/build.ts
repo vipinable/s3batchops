@@ -133,7 +133,7 @@ export class LambdaWithLayer extends Stack {
       ],
     }));
 
-    const apigw = new apigateway.RestApi(this, `{id}apigw`);
+    const apigw = new apigateway.RestApi(this, `${id}apigw`);
        
     //API gateway lambda integration
     const apigwbeIntegration = new apigateway.LambdaIntegration(fn);
