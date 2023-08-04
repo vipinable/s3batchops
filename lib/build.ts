@@ -141,9 +141,9 @@ export class LambdaWithLayer extends Stack {
         s3Bucket.bucketArn
       ],
       actions: [
-        's3:GetBucket*',
+        's3:PutObject',
         's3:GetObject*',
-        's3:List*'
+        's3:ListBucket'
       ],
     }));
 
