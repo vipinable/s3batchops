@@ -110,7 +110,7 @@ export class LambdaWithLayer extends Stack {
       },
       });
     
-    fn.addToPolicy(new iam.PolicyStatement({
+    fn.addToRolePolicy(new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
       resources: [
         s3cRole.roleArn
@@ -120,7 +120,7 @@ export class LambdaWithLayer extends Stack {
       ],
     }));
 
-    fn.addToPolicy(new iam.PolicyStatement({
+    fn.addToRolePolicy(new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
       resources: ['*'],
       actions: [
