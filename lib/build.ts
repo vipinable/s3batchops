@@ -109,6 +109,28 @@ export class LambdaWithLayer extends Stack {
         ROLE_ARN: s3cRole.roleArn
       },
       });
+    
+    fn.addToPolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      resources: [
+        s3cRole.roleArn
+      ],
+      actions: [
+        "iam:PassRole"
+      ],
+    }));
+
+    fn.addToPolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      resources: ['*'],
+      actions: [
+        "s3:CreateJob",
+        "s3:ListJobs",
+        "s3:DescribeJob",
+        "s3:UpdateJobPriority",
+        "s3:UpdateJobStatus"
+      ],
+    }));
 
   //EndStack
   }}

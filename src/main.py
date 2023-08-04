@@ -5,8 +5,8 @@ import json
 import os
 from botocore.exceptions import ClientError
 from botocore.config import Config
-
-import jinja2
+import uuid
+#import jinja2
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -14,18 +14,23 @@ logger.setLevel(logging.INFO)
 # Create service clients
 session = boto3.session.Session()
 s3 = session.client('s3')
-sts = session.clinet('sts')
-s3c = session.client('s3control')
+sts = session.client('sts')
+s3c = session.client('s3control',region_name='us-east-1')
 
 def handler(event, context):
     
     logger.info("An event received %s" % (event))
     logger.info("Response received")
     
+    AccountID = sts.get_caller_identity()['Account']
+    jobId = '0f98e445-2d38-430e-a027-a10c259183cd'
     prefix = 'test1'
-    bucket = os.environ.get("BUCKET")
-    s3role = os.environ.get("S3ROLE")
-    apiurl = os.environ.get("APIURL")
+    #print(s3batchops(AccountID))
+    #print(joblist(AccountID))
+    print(jobstatus(AccountID,jobId))
+    
+    
+    return
     
     logger.info("QueryString Parameters %s" % (event['queryStringParameters']))
     
@@ -217,49 +222,56 @@ def list_objects(bucketname,prefix):
                
     return ObjectsList['Contents']
     
-def s3batchops():
+def s3batchops(AccountID):
     source_bucket = os.environ.get("SOURCE_BUCKET")
     sink_bucket = os.environ.get("SINK_BUCKET")
     role_arn = os.environ.get("ROLE_ARN")
     RequestToken = str(uuid.uuid4())
-    AccountID = sts.get_caller_identity()['Account']
+    print(RequestToken,sink_bucket,source_bucket)
 
-    response = client.create_job(
+    response = s3c.create_job(
         AccountId=AccountID,
         Operation={
             'S3PutObjectCopy': {
                 'TargetResource': 'arn:aws:s3:::' + sink_bucket,
                 'CannedAccessControlList': 'bucket-owner-full-control',
                 'StorageClass': 'STANDARD',
-                'TargetKeyPrefix': 's3batch',
-                'ChecksumAlgorithm': 'SHA256'
-            },
-            'S3PutObjectTagging': {
-                'TagSet': [
-                    {
-                        'Key': 'Label',
-                        'Value': 'BatchOps'
-                    },
-                ]
+                'TargetKeyPrefix': 's3batch'
             }
         },
         Report={
             'Bucket': 'arn:aws:s3:::' + sink_bucket,
             'Format': 'Report_CSV_20180820',
+            'Enabled': True,
             'ReportScope': 'AllTasks'
         },
-        ClientRequestToken='RequestToken',
+        ClientRequestToken=RequestToken,
         Manifest={
             'Spec': {
                 'Format': 'S3BatchOperations_CSV_20180820',
+                'Fields': ["Bucket", "Key"]
             },
             'Location': {
-                'ObjectArn': 'string',
-                'ETag': 'string'
+                'ObjectArn': 'arn:aws:s3:::s3batchops-s3inventorybac0e24e-61tssxtt9mj7/xlsreport-test-www/gstestinv/2023-08-01T01-00Z/manifest.json',
+                'ETag': '73c7771e9c87f2938406e7fa3e6a3158'
             }
         },
         Description='S3 batch operations testing',
-        Priority=123,
-        RoleArn='string',
+        Priority=128,
+        RoleArn=role_arn
     )
+    
     print(response)
+
+def jobstatus(AccountID,jobId):
+    response = s3c.describe_job(
+    AccountId=AccountID,
+    JobId=jobId
+    )
+    return(response)
+    
+def joblist(AccountID):
+    response = s3c.list_jobs(
+        AccountId=AccountID,
+    )
+    return(response)
