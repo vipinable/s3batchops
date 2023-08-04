@@ -134,6 +134,19 @@ export class LambdaWithLayer extends Stack {
       ],
     }));
 
+    fn.addToRolePolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      resources: [
+        s3Bucket.arnForObjects("*"),
+        s3Bucket.bucketArn
+      ],
+      actions: [
+        's3:GetBucket*',
+        's3:GetObject*',
+        's3:List*'
+      ],
+    }));
+
     const apigw = new apigateway.RestApi(this, `${id}apigw`);
        
     //API gateway lambda integration
