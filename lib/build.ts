@@ -102,6 +102,7 @@ export class LambdaWithLayer extends Stack {
       code: lambda.Code.fromAsset(path.join(__dirname, '../src')),
       memorySize: 512,
       timeout: Duration.seconds(300),
+      layers: [layer0],
       environment: {
         APPNAME: process.env.ApplicationName!,
         ENVNAME: process.env.Environment!, 
